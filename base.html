@@ -1,0 +1,314 @@
+<!-- =============================================
+     WardPulse AI - Base Template
+     =============================================
+     Shared layout: navigation, footer, chatbot, toasts -->
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WardPulse AI - Smart Civic Complaint Portal for reporting and tracking local issues in your ward.">
+    <title>{% block title %}WardPulse AI{% endblock %} | Smart Civic Portal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '[data-theme="dark"]'],
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        primary: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' },
+                        accent: { 50:'#ecfeff',100:'#cffafe',200:'#a5f3fc',300:'#67e8f9',400:'#22d3ee',500:'#06b6d4',600:'#0891b2' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <!-- =============================================
+         Loading Screen
+         ============================================= -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading WardPulse AI...</p>
+    </div>
+
+    <!-- =============================================
+         Navigation Bar
+         ============================================= -->
+    <nav class="navbar glass-nav" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+            <!-- Logo -->
+            <a href="{{ url_for('main.landing') }}" class="nav-logo flex items-center gap-2">
+                <i class="fas fa-city text-2xl"></i>
+                <span>WardPulse AI</span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden lg:flex items-center gap-6">
+                <a href="{{ url_for('main.landing') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('main.issue_board') }}" class="nav-link">Issues</a>
+                <a href="{{ url_for('main.map_view') }}" class="nav-link">Map</a>
+
+                {% if session.get('admin_id') %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Admin Dashboard</a>
+                    <a href="{{ url_for('admin.complaints') }}" class="nav-link">Complaints</a>
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 text-sm font-medium" style="color: var(--text-secondary);">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center text-white text-xs font-bold">
+                                {{ session.get('admin_name', 'A')[0] }}
+                            </div>
+                            {{ session.get('admin_name', 'Admin').split()[0] }}
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 top-full mt-2 w-48 py-2 rounded-xl shadow-xl border hidden group-hover:block" style="background: var(--bg-secondary); border-color: var(--border-color); z-index: 1001;">
+                            <a href="{{ url_for('admin.dashboard') }}" class="block px-4 py-2 text-sm hover:bg-primary-500/10" style="color: var(--text-primary);">
+                                <i class="fas fa-chart-pie mr-2"></i>Dashboard
+                            </a>
+                            <a href="{{ url_for('admin.complaints') }}" class="block px-4 py-2 text-sm hover:bg-primary-500/10" style="color: var(--text-primary);">
+                                <i class="fas fa-list mr-2"></i>Complaints
+                            </a>
+                            <hr style="border-color: var(--border-color); margin: 0.25rem 0;">
+                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                {% elif current_user.is_authenticated %}
+                    <a href="{{ url_for('user.dashboard') }}" class="nav-link">Dashboard</a>
+                    <a href="{{ url_for('user.report_issue') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Report Issue
+                    </a>
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 text-sm font-medium" style="color: var(--text-secondary);">
+                            {% if current_user.profile_photo %}
+                                <img src="{{ url_for('main.uploaded_file', filename=current_user.profile_photo) }}" class="w-8 h-8 rounded-full object-cover border-2 border-primary-500">
+                            {% else %}
+                                <div class="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold">
+                                    {{ current_user.full_name[0] }}
+                                </div>
+                            {% endif %}
+                            {{ current_user.full_name.split()[0] }}
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 top-full mt-2 w-48 py-2 rounded-xl shadow-xl border hidden group-hover:block" style="background: var(--bg-secondary); border-color: var(--border-color); z-index: 1001;">
+                            <a href="{{ url_for('user.profile') }}" class="block px-4 py-2 text-sm hover:bg-primary-500/10" style="color: var(--text-primary);">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="{{ url_for('user.my_reports') }}" class="block px-4 py-2 text-sm hover:bg-primary-500/10" style="color: var(--text-primary);">
+                                <i class="fas fa-list mr-2"></i>My Reports
+                            </a>
+                            <hr style="border-color: var(--border-color); margin: 0.25rem 0;">
+                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-red-500 hover:bg-red-500/10">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm">Register</a>
+                    <a href="{{ url_for('auth.admin_login') }}" class="nav-link text-xs opacity-60" title="Admin Login">
+                        <i class="fas fa-shield-halved"></i>
+                    </a>
+                {% endif %}
+
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-primary-500/10 transition" id="themeToggle" style="color: var(--text-secondary);">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="lg:hidden p-2" onclick="toggleMobileMenu()" style="color: var(--text-primary);">
+                <i class="fas fa-bars text-xl" id="mobileMenuIcon"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="{{ url_for('main.landing') }}" class="nav-link text-lg">Home</a>
+        <a href="{{ url_for('main.issue_board') }}" class="nav-link text-lg">Issues</a>
+        <a href="{{ url_for('main.map_view') }}" class="nav-link text-lg">Map</a>
+        {% if session.get('admin_id') %}
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link text-lg">Admin Dashboard</a>
+            <a href="{{ url_for('admin.complaints') }}" class="nav-link text-lg">Complaints</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link text-lg text-red-500">Logout</a>
+        {% elif current_user.is_authenticated %}
+            <a href="{{ url_for('user.dashboard') }}" class="nav-link text-lg">Dashboard</a>
+            <a href="{{ url_for('user.report_issue') }}" class="nav-link text-lg">Report Issue</a>
+            <a href="{{ url_for('user.profile') }}" class="nav-link text-lg">Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-link text-lg text-red-500">Logout</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}" class="nav-link text-lg">Login</a>
+            <a href="{{ url_for('auth.register') }}" class="nav-link text-lg">Register</a>
+            <a href="{{ url_for('auth.admin_login') }}" class="nav-link text-lg">Admin</a>
+        {% endif %}
+        <button onclick="toggleTheme()" class="nav-link text-lg text-left">
+            <i class="fas fa-moon mr-2"></i>Toggle Theme
+        </button>
+    </div>
+
+    <!-- =============================================
+         Toast Notification Container
+         ============================================= -->
+    <div class="toast-container" id="toastContainer">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast toast-{{ category }}" onclick="this.remove()">
+                        <span class="toast-icon">
+                            {% if category == 'success' %}<i class="fas fa-check-circle text-green-500"></i>
+                            {% elif category == 'error' %}<i class="fas fa-times-circle text-red-500"></i>
+                            {% elif category == 'warning' %}<i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                            {% else %}<i class="fas fa-info-circle text-blue-500"></i>{% endif %}
+                        </span>
+                        <span class="toast-message">{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- =============================================
+         Main Content
+         ============================================= -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- =============================================
+         Footer
+         ============================================= -->
+    {% block footer %}
+    <footer class="footer">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- Brand -->
+                <div class="md:col-span-1">
+                    <a href="{{ url_for('main.landing') }}" class="nav-logo text-xl flex items-center gap-2 mb-4">
+                        <i class="fas fa-city"></i>WardPulse AI
+                    </a>
+                    <p class="text-sm" style="color: var(--text-secondary);">
+                        Empowering citizens to build better communities through transparent civic engagement.
+                    </p>
+                </div>
+                <!-- Links -->
+                <div>
+                    <h4 class="font-bold mb-3" style="color: var(--text-primary);">Quick Links</h4>
+                    <div class="flex flex-col gap-2">
+                        <a href="{{ url_for('main.issue_board') }}" class="footer-link">Issue Board</a>
+                        <a href="{{ url_for('main.map_view') }}" class="footer-link">Map View</a>
+                        <a href="{{ url_for('auth.login') }}" class="footer-link">Citizen Login</a>
+                        <a href="{{ url_for('auth.admin_login') }}" class="footer-link">Admin Portal</a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-3" style="color: var(--text-primary);">Categories</h4>
+                    <div class="flex flex-col gap-2">
+                        <span class="footer-link">Road Damage</span>
+                        <span class="footer-link">Street Light</span>
+                        <span class="footer-link">Drainage</span>
+                        <span class="footer-link">Public Safety</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-3" style="color: var(--text-primary);">Contact</h4>
+                    <div class="flex flex-col gap-2">
+                        <span class="footer-link"><i class="fas fa-phone mr-2"></i>1800-XXX-XXXX</span>
+                        <span class="footer-link"><i class="fas fa-envelope mr-2"></i>support@wardpulse.ai</span>
+                        <span class="footer-link"><i class="fas fa-map-marker-alt mr-2"></i>Smart City HQ</span>
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                        <a href="#" class="text-lg hover:text-primary-500 transition" style="color: var(--text-secondary);"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-lg hover:text-primary-500 transition" style="color: var(--text-secondary);"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-lg hover:text-primary-500 transition" style="color: var(--text-secondary);"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-lg hover:text-primary-500 transition" style="color: var(--text-secondary);"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t pt-6 text-center text-sm" style="border-color: var(--border-color); color: var(--text-muted);">
+                <p>&copy; {{ current_year }} WardPulse AI. Built for Smart Cities. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+    <!-- =============================================
+         AI Chatbot Widget
+         ============================================= -->
+    <button class="chatbot-toggle" id="chatbotToggle" onclick="toggleChatbot()" title="AI Assistant">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div>
+                    <h3>WardPulse AI</h3>
+                    <p class="text-xs opacity-80">Always here to help</p>
+                </div>
+            </div>
+            <button onclick="toggleChatbot()" class="text-white/80 hover:text-white transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="chat-message bot">
+                👋 Hello! I'm WardPulse AI Assistant. How can I help you today?
+                <br><br>
+                You can ask me about:
+                <br>• Reporting issues
+                <br>• Voting on complaints
+                <br>• Complaint status
+                <br>• Emergency contacts
+            </div>
+        </div>
+        <div class="chatbot-input-area">
+            <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter')sendChatMessage()">
+            <button onclick="sendChatMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- =============================================
+         Leaflet JS
+         ============================================= -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- =============================================
+         Core JavaScript
+         ============================================= -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!-- =============================================
+     WardPulse AI - User Registration Page
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
+<section class="min-h-screen flex items-center justify-center py-20 px-4" style="background: var(--gradient-hero);">
+    <div class="w-full max-w-lg">
+        <div class="glass-card p-8" style="animation: scaleIn 0.4s ease;">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <a href="{{ url_for('main.landing') }}" class="nav-logo text-2xl inline-flex items-center gap-2 mb-4">
+                    <i class="fas fa-city"></i>WardPulse AI
+                </a>
+                <h1 class="text-2xl font-bold mb-1" style="color: var(--text-primary);">Create Account</h1>
+                <p class="text-sm" style="color: var(--text-secondary);">Join the civic engagement platform</p>
+            </div>
+
+            <!-- Registration Form -->
+            <form method="POST" action="{{ url_for('auth.register') }}" enctype="multipart/form-data" id="registerForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-user mr-2 text-primary-500"></i>Full Name</label>
+                    <input type="text" name="full_name" class="form-input" placeholder="John Doe" required minlength="2">
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-envelope mr-2 text-primary-500"></i>Email Address</label>
+                    <input type="email" name="email" class="form-input" placeholder="your@email.com" required>
+                </div>
+
+                <!-- Phone -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-phone mr-2 text-primary-500"></i>Phone Number</label>
+                    <input type="tel" name="phone" class="form-input" placeholder="+91 9876543210" required minlength="10">
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-lock mr-2 text-primary-500"></i>Password</label>
+                    <div class="relative">
+                        <input type="password" name="password" id="regPassword" class="form-input pr-10" placeholder="Min 6 characters" required minlength="6" oninput="checkPasswordStrength(this.value)">
+                        <button type="button" onclick="togglePasswordVisibility('regPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2" style="color: var(--text-muted);">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-strength mt-2">
+                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    </div>
+                    <p class="text-xs mt-1" style="color: var(--text-muted);" id="passwordStrengthText">Enter a password</p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-lock mr-2 text-primary-500"></i>Confirm Password</label>
+                    <input type="password" name="confirm_password" id="confirmPassword" class="form-input" placeholder="Re-enter password" required>
+                    <p class="text-xs mt-1 text-red-500 hidden" id="passwordMatch">Passwords do not match</p>
+                </div>
+
+                <!-- Profile Photo -->
+                <div class="form-group">
+                    <label class="form-label"><i class="fas fa-camera mr-2 text-primary-500"></i>Profile Photo (Optional)</label>
+                    <div class="file-upload" id="profileUpload" onclick="document.getElementById('profileInput').click()">
+                        <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <p class="upload-text">Click to upload photo</p>
+                        <p class="text-xs mt-1" style="color: var(--text-muted);">JPG, JPEG, PNG (Max 16MB)</p>
+                        <input type="file" name="profile_photo" id="profileInput" accept=".jpg,.jpeg,.png" hidden onchange="previewImage(this, 'profilePreview')">
+                    </div>
+                    <img id="profilePreview" class="image-preview mx-auto rounded-full w-24 h-24 object-cover mt-3" alt="Preview">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full btn-lg mt-2">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <p class="text-center text-sm mt-6" style="color: var(--text-secondary);">
+                Already have an account?
+                <a href="{{ url_for('auth.login') }}" class="text-primary-500 font-semibold hover:text-primary-400 transition">Sign in</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

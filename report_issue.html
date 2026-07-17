@@ -1,0 +1,196 @@
+<!-- =============================================
+     WardPulse AI - Report Issue Page
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}Report Issue{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-24">
+    <div class="glass-card p-8">
+        <!-- Header -->
+        <div class="flex items-center gap-4 mb-8">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xl">
+                <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold" style="color: var(--text-primary);">Report a Local Issue</h1>
+                <p class="text-sm" style="color: var(--text-secondary);">Help improve your community by reporting problems</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('user.report_issue') }}" enctype="multipart/form-data" id="reportForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div>
+                    <!-- Issue Title -->
+                    <div class="form-group">
+                        <label class="form-label">Issue Title *</label>
+                        <input type="text" name="title" id="issueTitle" class="form-input" placeholder="e.g. Large pothole on Main Street" required minlength="5">
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label class="form-label">Description *</label>
+                        <textarea name="description" id="issueDescription" class="form-input" rows="4" placeholder="Describe the issue in detail..." required minlength="10" oninput="detectCategoryFromDescription()"></textarea>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select name="category" id="issueCategory" class="form-input form-select" required>
+                            <option value="">Select Category</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs mt-1 text-primary-500 hidden" id="aiCategoryHint">
+                            <i class="fas fa-robot mr-1"></i><span id="aiCategoryText"></span>
+                        </p>
+                    </div>
+
+                    <!-- Ward Number -->
+                    <div class="form-group">
+                        <label class="form-label">Ward Number *</label>
+                        <input type="text" name="ward" class="form-input" placeholder="e.g. Ward 12" required>
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select name="priority" id="issuePriority" class="form-input form-select">
+                            <option value="low">🟢 Low</option>
+                            <option value="medium" selected>🟡 Medium</option>
+                            <option value="high">🟠 High</option>
+                            <option value="critical">🔴 Critical</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Location -->
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" name="address" id="issueAddress" class="form-input mb-2" placeholder="Enter address manually">
+                        <button type="button" onclick="getLocation()" class="btn btn-outline btn-sm w-full">
+                            <i class="fas fa-crosshairs mr-2"></i>Use GPS Location
+                        </button>
+                        <p class="text-xs mt-2 hidden" id="gpsStatus" style="color: var(--text-muted);">
+                            <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                            <span id="gpsCoords"></span>
+                        </p>
+                        <!-- Mini Map -->
+                        <div id="locationMap" class="mt-3 rounded-xl overflow-hidden" style="height: 200px; display: none;"></div>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label class="form-label">Upload Image</label>
+                        <div class="file-upload" id="issueUpload" onclick="document.getElementById('issueImage').click()">
+                            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <p class="upload-text">Click or drag to upload photo</p>
+                            <p class="text-xs mt-1" style="color: var(--text-muted);">JPG, JPEG, PNG (Max 16MB)</p>
+                            <input type="file" name="image" id="issueImage" accept=".jpg,.jpeg,.png" hidden onchange="previewImage(this, 'issuePreview')">
+                        </div>
+                        <img id="issuePreview" class="image-preview w-full rounded-xl mt-3" alt="Preview">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Duplicate Detection Alert -->
+            <div class="hidden mt-4 p-4 rounded-xl border-2 border-amber-500/30" id="duplicateAlert" style="background: rgba(245, 158, 11, 0.1);">
+                <p class="font-semibold text-amber-500 mb-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Similar Issue Found
+                </p>
+                <p class="text-sm mb-2" style="color: var(--text-secondary);">
+                    A similar issue may already exist. Consider upvoting it instead.
+                </p>
+                <div id="duplicateList" class="space-y-2"></div>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center gap-4 mt-8">
+                <button type="submit" class="btn btn-primary btn-lg flex-1">
+                    <i class="fas fa-paper-plane mr-2"></i>Submit Report
+                </button>
+                <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/issues.js') }}"></script>
+<script>
+    // Debounced duplicate check on title input
+    let dupTimeout;
+    document.getElementById('issueTitle')?.addEventListener('input', function() {
+        clearTimeout(dupTimeout);
+        dupTimeout = setTimeout(() => checkDuplicates(this.value), 800);
+    });
+
+    // AI category detection on description input
+    let catTimeout;
+    function detectCategoryFromDescription() {
+        clearTimeout(catTimeout);
+        const desc = document.getElementById('issueDescription').value;
+        if (desc.length < 15) return;
+        catTimeout = setTimeout(() => {
+            fetch('/api/ai/detect-category', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrf_token]').value},
+                body: JSON.stringify({description: desc})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.category) {
+                    const hint = document.getElementById('aiCategoryHint');
+                    const text = document.getElementById('aiCategoryText');
+                    hint.classList.remove('hidden');
+                    text.textContent = `AI suggests: ${data.category} (${data.priority} priority)`;
+                    // Auto-fill if not already selected
+                    const catSelect = document.getElementById('issueCategory');
+                    if (!catSelect.value) catSelect.value = data.category;
+                    const priSelect = document.getElementById('issuePriority');
+                    if (data.priority) priSelect.value = data.priority;
+                }
+            })
+            .catch(() => {});
+        }, 1000);
+    }
+
+    // Duplicate check
+    function checkDuplicates(title) {
+        if (title.length < 5) return;
+        fetch('/api/ai/check-duplicate', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrf_token]').value},
+            body: JSON.stringify({title: title})
+        })
+        .then(r => r.json())
+        .then(data => {
+            const alert = document.getElementById('duplicateAlert');
+            const list = document.getElementById('duplicateList');
+            if (data.duplicate && data.similar_issues) {
+                alert.classList.remove('hidden');
+                list.innerHTML = data.similar_issues.map(i =>
+                    `<a href="/issues/${i.id}" target="_blank" class="block p-2 rounded-lg hover:bg-amber-500/10 text-sm transition" style="color: var(--text-primary);">
+                        <span class="font-semibold">${i.title}</span>
+                        <span class="ml-2 text-xs badge badge-${i.status}">${i.status}</span>
+                        <span class="ml-2 text-xs text-primary-500"><i class="fas fa-arrow-up"></i> ${i.votes}</span>
+                    </a>`
+                ).join('');
+            } else {
+                alert.classList.add('hidden');
+            }
+        })
+        .catch(() => {});
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,146 @@
+<!-- =============================================
+     WardPulse AI - Admin Analytics & AI
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar" id="adminSidebar">
+        <div class="text-center mb-6 pb-6" style="border-bottom: 1px solid var(--border-color);">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl mx-auto mb-3"><i class="fas fa-shield-halved"></i></div>
+            <h3 class="font-bold" style="color: var(--text-primary);">{{ admin.full_name }}</h3>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link"><i class="fas fa-th-large"></i>Dashboard</a>
+        <a href="{{ url_for('admin.complaints') }}" class="sidebar-link"><i class="fas fa-clipboard-list"></i>Complaints</a>
+        <a href="{{ url_for('admin.users') }}" class="sidebar-link"><i class="fas fa-users"></i>Users</a>
+        {% if admin.is_super_admin %}
+        <a href="{{ url_for('admin.admins') }}" class="sidebar-link"><i class="fas fa-user-shield"></i>Admins</a>
+        {% endif %}
+        <a href="{{ url_for('admin.analytics') }}" class="sidebar-link active"><i class="fas fa-chart-bar"></i>Analytics</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link text-red-500 mt-4"><i class="fas fa-sign-out-alt"></i>Logout</a>
+    </aside>
+
+    <div class="dashboard-content">
+        <button onclick="document.getElementById('adminSidebar').classList.toggle('active')" class="lg:hidden btn btn-outline btn-sm mb-4">
+            <i class="fas fa-bars mr-2"></i>Menu
+        </button>
+
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold" style="color: var(--text-primary);">
+                <i class="fas fa-chart-bar mr-2 text-primary-500"></i>Analytics & AI Insights
+            </h1>
+            <button onclick="generateAISummary()" class="btn btn-primary">
+                <i class="fas fa-robot mr-2"></i>Generate AI Report
+            </button>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="glass-card p-6 mb-6 hidden" id="aiSummaryPanel">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-primary-500"><i class="fas fa-robot mr-2"></i>AI-Generated Report</h3>
+                <button onclick="this.parentElement.parentElement.classList.add('hidden')" style="color: var(--text-muted);"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="aiSummaryContent" class="text-sm whitespace-pre-line" style="color: var(--text-secondary); line-height: 1.8;"></div>
+        </div>
+
+        <!-- Monthly Trend -->
+        <div class="glass-card p-6 mb-6">
+            <h3 class="font-bold mb-4" style="color: var(--text-primary);">
+                <i class="fas fa-chart-line mr-2 text-accent-500"></i>Monthly Complaint Trend
+            </h3>
+            <div class="chart-container" style="height: 350px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Ward Leaderboard Table -->
+        <div class="glass-card p-6 mb-6">
+            <h3 class="font-bold mb-4" style="color: var(--text-primary);">
+                <i class="fas fa-trophy mr-2 text-amber-500"></i>Ward-wise Analysis
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Ward</th>
+                            <th>Total Issues</th>
+                            <th>Resolved</th>
+                            <th>Resolution Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ward_name, total, resolved in ward_stats %}
+                        <tr>
+                            <td class="font-bold">{{ loop.index }}</td>
+                            <td class="font-semibold" style="color: var(--text-primary);">{{ ward_name }}</td>
+                            <td>{{ total }}</td>
+                            <td class="text-green-500 font-semibold">{{ resolved or 0 }}</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-2 rounded-full" style="background: var(--bg-primary);">
+                                        <div class="h-full rounded-full bg-gradient-to-r from-primary-500 to-accent-500"
+                                             style="width: {{ ((resolved or 0) / total * 100)|int if total > 0 else 0 }}%;"></div>
+                                    </div>
+                                    <span class="text-xs font-semibold" style="color: var(--text-secondary);">
+                                        {{ ((resolved or 0) / total * 100)|int if total > 0 else 0 }}%
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not ward_stats %}
+            <p class="text-center py-8 text-sm" style="color: var(--text-muted);">No data available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script>
+    // Monthly Trend Line Chart
+    const monthlyData = {{ monthly|tojson }};
+    const monthLabels = monthlyData.map(m => m[0]);
+    const monthData = monthlyData.map(m => m[1]);
+
+    if (document.getElementById('trendChart') && monthLabels.length > 0) {
+        new Chart(document.getElementById('trendChart'), {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Complaints',
+                    data: monthData,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#6366f1',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(148,163,184,0.1)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

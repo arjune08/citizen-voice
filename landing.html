@@ -1,0 +1,368 @@
+<!-- =============================================
+     WardPulse AI - Landing Page
+     =============================================
+     Hero, About, How It Works, Stats, Trending, Features, Contact -->
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- =============================================
+     Hero Section
+     ============================================= -->
+<section class="hero-section" id="hero">
+    <!-- Animated Particles -->
+    <div class="hero-particles" id="heroParticles"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <!-- Badge -->
+        <div class="hero-badge mb-6" style="animation: fadeInDown 0.6s ease;">
+            <i class="fas fa-sparkles"></i>
+            <span>AI-Powered Civic Platform</span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="hero-title mb-6" style="animation: fadeInUp 0.6s ease 0.1s both;">
+            Your Voice.<br>
+            <span style="background: linear-gradient(135deg, #22d3ee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Your Ward.</span><br>
+            Your Power.
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="hero-subtitle mx-auto mb-10" style="animation: fadeInUp 0.6s ease 0.2s both;">
+            Report local issues, vote on community priorities, and track resolutions with AI-powered assistance. Together, let's build smarter cities.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4" style="animation: fadeInUp 0.6s ease 0.3s both;">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle"></i> Report Issue
+            </a>
+            <a href="{{ url_for('main.issue_board') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-th-large"></i> View Issues
+            </a>
+        </div>
+
+        <!-- Live Counter -->
+        <div class="flex items-center justify-center gap-8 mt-12" style="animation: fadeInUp 0.6s ease 0.4s both;">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-white counter" data-target="{{ total_issues }}">0</div>
+                <div class="text-sm text-white/60">Issues Reported</div>
+            </div>
+            <div class="w-px h-12 bg-white/20"></div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-white counter" data-target="{{ total_users }}">0</div>
+                <div class="text-sm text-white/60">Active Citizens</div>
+            </div>
+            <div class="w-px h-12 bg-white/20"></div>
+            <div class="text-center">
+                <div class="text-3xl font-bold text-white counter" data-target="{{ resolved }}">0</div>
+                <div class="text-sm text-white/60">Resolved</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        <a href="#about" class="text-white/50 hover:text-white/80 transition">
+            <i class="fas fa-chevron-down text-2xl"></i>
+        </a>
+    </div>
+</section>
+
+<!-- =============================================
+     About Section
+     ============================================= -->
+<section class="section" id="about">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="section-title animate-on-scroll">About <span class="text-primary-500">WardPulse AI</span></h2>
+        <p class="section-subtitle animate-on-scroll">
+            WardPulse AI is a next-generation civic complaint management platform that leverages artificial intelligence
+            to streamline issue reporting, prioritization, and resolution across urban wards.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="glass-card p-8 text-center animate-on-scroll">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-2xl mx-auto mb-4">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2" style="color: var(--text-primary);">AI-Powered</h3>
+                <p class="text-sm" style="color: var(--text-secondary);">Smart category detection, duplicate prevention, and priority classification powered by Gemini AI.</p>
+            </div>
+            <div class="glass-card p-8 text-center animate-on-scroll">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center text-white text-2xl mx-auto mb-4">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2" style="color: var(--text-primary);">Geo-Tagged</h3>
+                <p class="text-sm" style="color: var(--text-secondary);">Every issue is mapped with GPS coordinates. View all complaints on an interactive map.</p>
+            </div>
+            <div class="glass-card p-8 text-center animate-on-scroll">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-2xl mx-auto mb-4">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2" style="color: var(--text-primary);">Transparent</h3>
+                <p class="text-sm" style="color: var(--text-secondary);">Real-time status updates, public voting, and full transparency in complaint resolution.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =============================================
+     How It Works Section
+     ============================================= -->
+<section class="section" style="background: var(--bg-secondary);" id="how-it-works">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="section-title animate-on-scroll">How It <span class="text-primary-500">Works</span></h2>
+        <p class="section-subtitle animate-on-scroll">
+            Report and track civic issues in four simple steps.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="step-card animate-on-scroll">
+                <div class="step-number">1</div>
+                <h3 class="step-title">Register</h3>
+                <p class="step-desc">Create your free citizen account in under a minute.</p>
+            </div>
+            <div class="step-card animate-on-scroll">
+                <div class="step-number">2</div>
+                <h3 class="step-title">Report</h3>
+                <p class="step-desc">Submit issues with photos, location, and details.</p>
+            </div>
+            <div class="step-card animate-on-scroll">
+                <div class="step-number">3</div>
+                <h3 class="step-title">Vote</h3>
+                <p class="step-desc">Upvote community issues to boost their priority.</p>
+            </div>
+            <div class="step-card animate-on-scroll">
+                <div class="step-number">4</div>
+                <h3 class="step-title">Resolve</h3>
+                <p class="step-desc">Track progress as ward officers address complaints.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =============================================
+     Stats Section
+     ============================================= -->
+<section class="section" id="stats">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="section-title animate-on-scroll">Platform <span class="text-primary-500">Statistics</span></h2>
+        <p class="section-subtitle animate-on-scroll">
+            Real-time metrics from our civic engagement platform.
+        </p>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon bg-gradient-to-br from-primary-500 to-primary-700 mb-3">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="stat-value text-primary-500 counter" data-target="{{ total_issues }}">0</div>
+                <div class="stat-label">Total Issues</div>
+            </div>
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon bg-gradient-to-br from-accent-500 to-accent-600 mb-3">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value text-accent-500 counter" data-target="{{ total_users }}">0</div>
+                <div class="stat-label">Citizens</div>
+            </div>
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon bg-gradient-to-br from-green-500 to-emerald-600 mb-3">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value text-green-500 counter" data-target="{{ resolved }}">0</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon bg-gradient-to-br from-amber-500 to-orange-600 mb-3">
+                    <i class="fas fa-map-pin"></i>
+                </div>
+                <div class="stat-value text-amber-500">{{ (total_issues / 25)|int if total_issues > 0 else 0 }}+</div>
+                <div class="stat-label">Wards Active</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =============================================
+     Trending Issues Section
+     ============================================= -->
+{% if trending %}
+<section class="section" style="background: var(--bg-secondary);" id="trending">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="section-title animate-on-scroll">Trending <span class="text-primary-500">Issues</span></h2>
+        <p class="section-subtitle animate-on-scroll">
+            Most upvoted issues by the community.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for issue in trending %}
+            <div class="issue-card animate-on-scroll">
+                {% if issue.image_path %}
+                    <img src="{{ url_for('main.uploaded_file', filename=issue.image_path) }}" alt="{{ issue.title }}" class="issue-image">
+                {% else %}
+                    <div class="issue-image flex items-center justify-center" style="background: var(--gradient-card);">
+                        <i class="fas fa-image text-4xl" style="color: var(--text-muted);"></i>
+                    </div>
+                {% endif %}
+                <div class="issue-body">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="badge badge-{{ issue.priority }}">{{ issue.priority }}</span>
+                        <span class="badge badge-{{ issue.status }}">{{ issue.status }}</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-1" style="color: var(--text-primary);">{{ issue.title }}</h3>
+                    <p class="text-sm mb-3" style="color: var(--text-secondary);">{{ issue.description[:100] }}...</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs" style="color: var(--text-muted);">
+                            <i class="fas fa-map-marker-alt mr-1"></i>Ward {{ issue.ward }}
+                        </span>
+                        <span class="text-sm font-semibold text-primary-500">
+                            <i class="fas fa-arrow-up mr-1"></i>{{ issue.votes_count }} votes
+                        </span>
+                    </div>
+                    <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="block mt-3 text-center text-sm font-semibold text-primary-500 hover:text-primary-400 transition">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="{{ url_for('main.issue_board') }}" class="btn btn-outline">
+                View All Issues <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- =============================================
+     Features Section
+     ============================================= -->
+<section class="section" id="features">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="section-title animate-on-scroll">Powerful <span class="text-primary-500">Features</span></h2>
+        <p class="section-subtitle animate-on-scroll">
+            Everything you need for effective civic complaint management.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon bg-gradient-to-br from-primary-500 to-primary-700"><i class="fas fa-camera"></i></div>
+                <h3 class="feature-title">Photo Evidence</h3>
+                <p class="feature-desc">Upload images of issues for clear documentation and faster resolution.</p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon bg-gradient-to-br from-accent-500 to-accent-600"><i class="fas fa-robot"></i></div>
+                <h3 class="feature-title">AI Assistant</h3>
+                <p class="feature-desc">Get instant help from our AI chatbot for reporting, tracking, and more.</p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon bg-gradient-to-br from-green-500 to-emerald-600"><i class="fas fa-vote-yea"></i></div>
+                <h3 class="feature-title">Community Voting</h3>
+                <p class="feature-desc">Upvote issues to prioritize what matters most to your community.</p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon bg-gradient-to-br from-amber-500 to-orange-600"><i class="fas fa-map-marked-alt"></i></div>
+                <h3 class="feature-title">Interactive Map</h3>
+                <p class="feature-desc">View all issues on a map with color-coded priority markers.</p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon bg-gradient-to-br from-rose-500 to-pink-600"><i class="fas fa-bell"></i></div>
+                <h3 class="feature-title">Real-time Updates</h3>
+                <p class="feature-desc">Get notified when your complaint status changes or receives votes.</p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon bg-gradient-to-br from-violet-500 to-purple-600"><i class="fas fa-shield-halved"></i></div>
+                <h3 class="feature-title">Admin Dashboard</h3>
+                <p class="feature-desc">Powerful tools for ward officers to manage and resolve complaints.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =============================================
+     Contact Section
+     ============================================= -->
+<section class="section" style="background: var(--bg-secondary);" id="contact">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="section-title animate-on-scroll">Get <span class="text-primary-500">Started</span></h2>
+        <p class="section-subtitle animate-on-scroll">
+            Join thousands of citizens making their communities better.
+        </p>
+
+        <div class="glass-card p-8 md:p-12 animate-on-scroll">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                <div>
+                    <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">For Citizens</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-green-500"></i> Free registration
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-green-500"></i> Report unlimited issues
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-green-500"></i> Track complaint status
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-green-500"></i> Vote on community issues
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-green-500"></i> AI-powered assistance
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary mt-6 w-full">
+                        <i class="fas fa-user-plus mr-2"></i>Register Now
+                    </a>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">For Ward Officers</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-primary-500"></i> Admin dashboard
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-primary-500"></i> Manage complaints
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-primary-500"></i> Export reports (Excel/PDF)
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-primary-500"></i> AI analytics
+                        </li>
+                        <li class="flex items-center gap-3 text-sm" style="color: var(--text-secondary);">
+                            <i class="fas fa-check-circle text-primary-500"></i> User management
+                        </li>
+                    </ul>
+                    <a href="{{ url_for('auth.admin_login') }}" class="btn btn-outline mt-6 w-full">
+                        <i class="fas fa-shield-halved mr-2"></i>Admin Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Generate hero particles
+    const particles = document.getElementById('heroParticles');
+    if (particles) {
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'hero-particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (10 + Math.random() * 20) + 's';
+            particle.style.width = (3 + Math.random() * 5) + 'px';
+            particle.style.height = particle.style.width;
+            particles.appendChild(particle);
+        }
+    }
+</script>
+{% endblock %}

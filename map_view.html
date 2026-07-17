@@ -1,0 +1,89 @@
+<!-- =============================================
+     WardPulse AI - Map View
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}Map View{% endblock %}
+
+{% block content %}
+<div class="pt-[72px]">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-bold" style="color: var(--text-primary);">
+                <i class="fas fa-map-marked-alt text-primary-500 mr-2"></i>Issue Map
+            </h1>
+            <div class="flex items-center gap-3 text-xs" style="color: var(--text-secondary);">
+                <span><span class="inline-block w-3 h-3 rounded-full bg-red-600 mr-1"></span>Critical</span>
+                <span><span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-1"></span>High</span>
+                <span><span class="inline-block w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>Medium</span>
+                <span><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1"></span>Low</span>
+            </div>
+        </div>
+        <div id="fullMap" class="map-container full-height"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const issuesData = {{ issues_data|safe }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('fullMap').setView([20.5937, 78.9629], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        const colors = {
+            critical: '#dc2626',
+            high: '#f97316',
+            medium: '#f59e0b',
+            low: '#10b981'
+        };
+
+        const markers = [];
+
+        issuesData.forEach(issue => {
+            if (issue.latitude && issue.longitude) {
+                const color = colors[issue.priority] || '#6366f1';
+                const marker = L.circleMarker([issue.latitude, issue.longitude], {
+                    radius: 10,
+                    fillColor: color,
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                const popupContent = `
+                    <div style="min-width: 200px; font-family: Inter, sans-serif;">
+                        ${issue.image_path ? `<img src="/uploads/${issue.image_path}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;">` : ''}
+                        <h3 style="font-weight:700;font-size:14px;margin:0 0 4px;">${issue.title}</h3>
+                        <p style="font-size:12px;color:#64748b;margin:0 0 6px;">${issue.description.substring(0, 80)}...</p>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+                            <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:${color}22;color:${color};font-weight:600;">${issue.priority}</span>
+                            <span style="font-size:11px;padding:2px 8px;border-radius:100px;background:#6366f122;color:#6366f1;font-weight:600;">${issue.status}</span>
+                        </div>
+                        <div style="font-size:11px;color:#94a3b8;">
+                            <span>📍 Ward ${issue.ward}</span> · 
+                            <span>🏷️ ${issue.category}</span> · 
+                            <span>👍 ${issue.votes_count} votes</span>
+                        </div>
+                        <a href="/issues/${issue.id}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#6366f1;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">View Details</a>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+            }
+        });
+
+        // Fit bounds if there are markers
+        if (markers.length > 0) {
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+    });
+</script>
+{% endblock %}

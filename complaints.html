@@ -1,0 +1,197 @@
+<!-- =============================================
+     WardPulse AI - Admin Complaints Management
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}Manage Complaints{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Admin Sidebar (reused) -->
+    <aside class="sidebar" id="adminSidebar">
+        <div class="text-center mb-6 pb-6" style="border-bottom: 1px solid var(--border-color);">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl mx-auto mb-3">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <h3 class="font-bold" style="color: var(--text-primary);">{{ session.get('admin_name', 'Admin') }}</h3>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link"><i class="fas fa-th-large"></i>Dashboard</a>
+        <a href="{{ url_for('admin.complaints') }}" class="sidebar-link active"><i class="fas fa-clipboard-list"></i>Complaints</a>
+        <a href="{{ url_for('admin.users') }}" class="sidebar-link"><i class="fas fa-users"></i>Users</a>
+        {% if session.get('admin_role') == 'super_admin' %}
+        <a href="{{ url_for('admin.admins') }}" class="sidebar-link"><i class="fas fa-user-shield"></i>Admins</a>
+        {% endif %}
+        <a href="{{ url_for('admin.analytics') }}" class="sidebar-link"><i class="fas fa-chart-bar"></i>Analytics</a>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-link text-red-500 mt-4"><i class="fas fa-sign-out-alt"></i>Logout</a>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+        <button onclick="document.getElementById('adminSidebar').classList.toggle('active')" class="lg:hidden btn btn-outline btn-sm mb-4">
+            <i class="fas fa-bars mr-2"></i>Menu
+        </button>
+
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold" style="color: var(--text-primary);">
+                <i class="fas fa-clipboard-list mr-2 text-primary-500"></i>Manage Complaints
+            </h1>
+            <div class="flex gap-2 mt-4 md:mt-0">
+                <a href="{{ url_for('admin.export_excel') }}" class="btn btn-sm" style="background: #10b981; color: white;">
+                    <i class="fas fa-file-excel mr-1"></i>Excel
+                </a>
+                <a href="{{ url_for('admin.export_pdf') }}" class="btn btn-sm" style="background: #ef4444; color: white;">
+                    <i class="fas fa-file-pdf mr-1"></i>PDF
+                </a>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="glass-card p-4 mb-6">
+            <form method="GET" class="flex flex-col lg:flex-row gap-3">
+                <input type="text" name="search" value="{{ search }}" placeholder="Search complaints..." class="form-input flex-1 py-2 text-sm">
+                <select name="category" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if category == cat }}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+                <select name="status" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="">All Status</option>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {{ 'selected' if status == s }}>{{ s|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <select name="priority" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="">All Priority</option>
+                    {% for p in priorities %}
+                    <option value="{{ p }}" {{ 'selected' if priority == p }}>{{ p|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter mr-1"></i>Filter</button>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="glass-card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Ward</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Votes</th>
+                            <th>Reporter</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in issues.items %}
+                        <tr>
+                            <td class="font-mono text-xs">#{{ issue.id }}</td>
+                            <td>
+                                {% if issue.image_path %}
+                                    <img src="{{ url_for('main.uploaded_file', filename=issue.image_path) }}" class="w-10 h-10 rounded-lg object-cover cursor-pointer" onclick="openImageModal('{{ url_for('main.uploaded_file', filename=issue.image_path) }}')">
+                                {% else %}
+                                    <span class="text-xs" style="color: var(--text-muted);">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="font-semibold text-sm hover:text-primary-500 transition" style="color: var(--text-primary);">
+                                    {{ issue.title[:30] }}{% if issue.title|length > 30 %}...{% endif %}
+                                </a>
+                            </td>
+                            <td class="text-xs">{{ issue.category }}</td>
+                            <td class="text-xs font-semibold">{{ issue.ward }}</td>
+                            <td><span class="badge badge-{{ issue.priority }}">{{ issue.priority }}</span></td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.update_complaint_status', issue_id=issue.id) }}" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <select name="status" onchange="this.form.submit()" class="text-xs py-1 px-2 rounded-lg border" style="background: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                        {% for s in statuses %}
+                                        <option value="{{ s }}" {{ 'selected' if issue.status == s }}>{{ s|capitalize }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="font-bold text-primary-500">{{ issue.votes_count }}</td>
+                            <td class="text-xs">{{ issue.reporter.full_name if issue.reporter else 'Unknown' }}</td>
+                            <td class="text-xs" style="color: var(--text-muted);">{{ issue.created_at.strftime('%b %d') }}</td>
+                            <td>
+                                <div class="flex gap-1">
+                                    <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="btn btn-sm btn-outline p-1 px-2" title="View">
+                                        <i class="fas fa-eye text-xs"></i>
+                                    </a>
+                                    {% if issue.image_path %}
+                                    <a href="{{ url_for('admin.download_image', filename=issue.image_path) }}" class="btn btn-sm p-1 px-2" style="background: #10b981; color: white;" title="Download">
+                                        <i class="fas fa-download text-xs"></i>
+                                    </a>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin.delete_complaint', issue_id=issue.id) }}" onsubmit="return confirm('Delete this complaint?');" class="inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm p-1 px-2" style="background: #ef4444; color: white;" title="Delete">
+                                            <i class="fas fa-trash text-xs"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if not issues.items %}
+            <div class="p-12 text-center">
+                <i class="fas fa-inbox text-4xl mb-3" style="color: var(--text-muted);"></i>
+                <p style="color: var(--text-secondary);">No complaints found</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if issues.pages > 1 %}
+        <div class="flex items-center justify-center gap-2 mt-6">
+            {% if issues.has_prev %}
+            <a href="{{ url_for('admin.complaints', page=issues.prev_num, search=search, category=category, status=status, priority=priority) }}" class="btn btn-outline btn-sm">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            {% for page_num in issues.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                <a href="{{ url_for('admin.complaints', page=page_num, search=search, category=category, status=status, priority=priority) }}"
+                   class="btn btn-sm {{ 'btn-primary' if page_num == issues.page else 'btn-outline' }}">{{ page_num }}</a>
+                {% else %}
+                <span style="color: var(--text-muted);">...</span>
+                {% endif %}
+            {% endfor %}
+            {% if issues.has_next %}
+            <a href="{{ url_for('admin.complaints', page=issues.next_num, search=search, category=category, status=status, priority=priority) }}" class="btn btn-outline btn-sm">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div class="modal-overlay" id="imageModal" onclick="this.classList.remove('active')">
+    <div class="modal-content p-0" style="max-width: 800px; background: transparent; box-shadow: none;" onclick="event.stopPropagation();">
+        <img id="modalImage" src="" class="w-full rounded-xl" alt="Preview">
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openImageModal(src) {
+        document.getElementById('modalImage').src = src;
+        document.getElementById('imageModal').classList.add('active');
+    }
+</script>
+{% endblock %}

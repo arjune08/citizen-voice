@@ -1,0 +1,174 @@
+<!-- =============================================
+     WardPulse AI - Issue Detail Page
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}{{ issue.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-24">
+    <!-- Back Button -->
+    <a href="{{ url_for('main.issue_board') }}" class="inline-flex items-center gap-2 text-sm font-semibold mb-6 hover:text-primary-500 transition" style="color: var(--text-secondary);">
+        <i class="fas fa-arrow-left"></i>Back to Issues
+    </a>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Image -->
+            {% if issue.image_path %}
+            <div class="glass-card overflow-hidden">
+                <img src="{{ url_for('main.uploaded_file', filename=issue.image_path) }}" alt="{{ issue.title }}" class="w-full max-h-[500px] object-cover">
+            </div>
+            {% endif %}
+
+            <!-- Issue Details -->
+            <div class="glass-card p-6">
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <span class="badge badge-{{ issue.priority }}">{{ issue.priority }}</span>
+                    <span class="badge badge-{{ issue.status }}">{{ issue.status }}</span>
+                    <span class="text-xs" style="color: var(--text-muted);">
+                        <i class="fas fa-tag mr-1"></i>{{ issue.category }}
+                    </span>
+                </div>
+
+                <h1 class="text-2xl font-bold mb-3" style="color: var(--text-primary);">{{ issue.title }}</h1>
+
+                <p class="mb-6" style="color: var(--text-secondary); line-height: 1.8;">{{ issue.description }}</p>
+
+                <!-- Meta Info -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl" style="background: var(--bg-primary);">
+                    <div>
+                        <p class="text-xs font-semibold" style="color: var(--text-muted);">Ward</p>
+                        <p class="font-bold" style="color: var(--text-primary);">{{ issue.ward }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold" style="color: var(--text-muted);">Reporter</p>
+                        <p class="font-bold" style="color: var(--text-primary);">{{ issue.reporter.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold" style="color: var(--text-muted);">Date</p>
+                        <p class="font-bold" style="color: var(--text-primary);">{{ issue.created_at.strftime('%b %d, %Y') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold" style="color: var(--text-muted);">Votes</p>
+                        <p class="font-bold text-primary-500" id="voteCountDisplay">{{ issue.votes_count }}</p>
+                    </div>
+                </div>
+
+                {% if issue.address %}
+                <div class="mt-4 p-3 rounded-xl flex items-center gap-3" style="background: var(--bg-primary);">
+                    <i class="fas fa-map-marker-alt text-primary-500"></i>
+                    <span class="text-sm" style="color: var(--text-secondary);">{{ issue.address }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Map -->
+            {% if issue.latitude and issue.longitude %}
+            <div class="glass-card p-4">
+                <h3 class="font-bold mb-3" style="color: var(--text-primary);">
+                    <i class="fas fa-map-marked-alt mr-2 text-primary-500"></i>Location
+                </h3>
+                <div id="issueMap" class="map-container" style="height: 300px;"></div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Vote Card -->
+            <div class="glass-card p-6 text-center">
+                <div class="text-4xl font-bold text-primary-500 mb-2" id="voteSideCount">{{ issue.votes_count }}</div>
+                <p class="text-sm mb-4" style="color: var(--text-secondary);">Community Votes</p>
+                <button class="btn {{ 'btn-primary' if not has_voted else 'btn-outline' }} w-full"
+                        onclick="voteIssue({{ issue.id }}, this)"
+                        id="voteDetailBtn">
+                    <i class="fas fa-arrow-up mr-2"></i>
+                    <span>{{ 'Voted' if has_voted else 'Upvote' }}</span>
+                </button>
+            </div>
+
+            <!-- Status Timeline -->
+            <div class="glass-card p-6">
+                <h3 class="font-bold mb-4" style="color: var(--text-primary);">
+                    <i class="fas fa-stream mr-2 text-primary-500"></i>Status Timeline
+                </h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">{{ issue.created_at.strftime('%b %d, %Y') }}</div>
+                        <div class="timeline-content">Issue Reported</div>
+                    </div>
+                    {% if issue.status in ['verified', 'assigned', 'resolved'] %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">Verified</div>
+                        <div class="timeline-content">Issue confirmed by officer</div>
+                    </div>
+                    {% endif %}
+                    {% if issue.status in ['assigned', 'resolved'] %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">Assigned</div>
+                        <div class="timeline-content">Assigned to department</div>
+                    </div>
+                    {% endif %}
+                    {% if issue.status == 'resolved' %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">{{ issue.updated_at.strftime('%b %d, %Y') if issue.updated_at else 'Resolved' }}</div>
+                        <div class="timeline-content">Issue Resolved ✅</div>
+                    </div>
+                    {% endif %}
+                    {% if issue.status == 'rejected' %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">Rejected</div>
+                        <div class="timeline-content" style="color: var(--error);">Issue Rejected ❌</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="glass-card p-6 text-center">
+                <h3 class="font-bold mb-3" style="color: var(--text-primary);">
+                    <i class="fas fa-qrcode mr-2 text-primary-500"></i>QR Code
+                </h3>
+                <div class="qr-code-container mx-auto">
+                    <img src="{{ url_for('api.generate_qr', issue_id=issue.id) }}" alt="QR Code" loading="lazy">
+                </div>
+                <p class="text-xs mt-2" style="color: var(--text-muted);">Scan to view this issue</p>
+            </div>
+
+            <!-- Share -->
+            <div class="glass-card p-6">
+                <h3 class="font-bold mb-3" style="color: var(--text-primary);">
+                    <i class="fas fa-share-alt mr-2 text-primary-500"></i>Share
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="navigator.clipboard.writeText(window.location.href); showToast('Link copied!', 'success');" class="btn btn-outline btn-sm flex-1">
+                        <i class="fas fa-link mr-1"></i>Copy Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/issues.js') }}"></script>
+{% if issue.latitude and issue.longitude %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('issueMap').setView([{{ issue.latitude }}, {{ issue.longitude }}], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const colors = {critical:'#dc2626', high:'#f97316', medium:'#f59e0b', low:'#10b981'};
+        const color = colors['{{ issue.priority }}'] || '#6366f1';
+
+        L.circleMarker([{{ issue.latitude }}, {{ issue.longitude }}], {
+            radius: 12, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
+        }).addTo(map).bindPopup('<b>{{ issue.title }}</b><br>{{ issue.category }}');
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,160 @@
+<!-- =============================================
+     WardPulse AI - Public Issue Board
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}Issue Board{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-24">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary);">
+            <i class="fas fa-th-large text-primary-500 mr-2"></i>Community Issue Board
+        </h1>
+        <p class="text-sm" style="color: var(--text-secondary);">Browse and vote on local issues in your community</p>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="glass-card p-4 mb-6">
+        <form method="GET" class="flex flex-col lg:flex-row gap-4">
+            <!-- Search -->
+            <div class="flex-1">
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search issues...">
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="flex flex-wrap gap-2">
+                <select name="category" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if category == cat }}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+                <select name="status" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="">All Status</option>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {{ 'selected' if status == s }}>{{ s|capitalize }}</option>
+                    {% endfor %}
+                </select>
+                <select name="ward" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="">All Wards</option>
+                    {% for w in ward_list %}
+                    <option value="{{ w }}" {{ 'selected' if ward == w }}>{{ w }}</option>
+                    {% endfor %}
+                </select>
+                <select name="sort" class="form-input form-select py-2 text-sm" style="width: auto;">
+                    <option value="newest" {{ 'selected' if sort == 'newest' }}>Newest</option>
+                    <option value="oldest" {{ 'selected' if sort == 'oldest' }}>Oldest</option>
+                    <option value="votes" {{ 'selected' if sort == 'votes' }}>Highest Votes</option>
+                    <option value="critical" {{ 'selected' if sort == 'critical' }}>Critical First</option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-filter mr-1"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Issue Count -->
+    <p class="text-sm mb-4" style="color: var(--text-muted);">
+        Showing {{ issues.items|length }} of {{ issues.total }} issues
+    </p>
+
+    <!-- Issue Grid -->
+    {% if issues.items %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for issue in issues.items %}
+        <div class="issue-card animate-on-scroll">
+            <!-- Image -->
+            {% if issue.image_path %}
+                <img src="{{ url_for('main.uploaded_file', filename=issue.image_path) }}" alt="{{ issue.title }}" class="issue-image">
+            {% else %}
+                <div class="issue-image flex items-center justify-center" style="background: var(--gradient-card);">
+                    <i class="fas fa-image text-4xl" style="color: var(--text-muted);"></i>
+                </div>
+            {% endif %}
+
+            <!-- Body -->
+            <div class="issue-body">
+                <!-- Badges -->
+                <div class="flex items-center justify-between mb-2">
+                    <span class="badge badge-{{ issue.priority }}">{{ issue.priority }}</span>
+                    <span class="badge badge-{{ issue.status }}">{{ issue.status }}</span>
+                </div>
+
+                <!-- Title & Description -->
+                <h3 class="font-bold mb-1" style="color: var(--text-primary);">
+                    <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="hover:text-primary-500 transition">
+                        {{ issue.title }}
+                    </a>
+                </h3>
+                <p class="text-sm mb-3" style="color: var(--text-secondary);">{{ issue.description[:100] }}...</p>
+
+                <!-- Meta -->
+                <div class="flex flex-wrap gap-2 text-xs mb-3" style="color: var(--text-muted);">
+                    <span><i class="fas fa-tag mr-1"></i>{{ issue.category }}</span>
+                    <span><i class="fas fa-map-marker-alt mr-1"></i>Ward {{ issue.ward }}</span>
+                    <span><i class="fas fa-user mr-1"></i>{{ issue.reporter.full_name }}</span>
+                    <span><i class="fas fa-calendar mr-1"></i>{{ issue.created_at.strftime('%b %d') }}</span>
+                </div>
+
+                <!-- Vote & View -->
+                <div class="flex items-center justify-between pt-3" style="border-top: 1px solid var(--border-color);">
+                    <button class="vote-btn {{ 'voted' if current_user.is_authenticated and issue.has_voted(current_user.id) }}"
+                            onclick="voteIssue({{ issue.id }}, this)"
+                            data-issue-id="{{ issue.id }}">
+                        <i class="fas fa-arrow-up"></i>
+                        <span class="vote-count">{{ issue.votes_count }}</span>
+                    </button>
+                    <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="text-sm font-semibold text-primary-500 hover:text-primary-400 transition">
+                        View Details →
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if issues.pages > 1 %}
+    <div class="flex items-center justify-center gap-2 mt-8">
+        {% if issues.has_prev %}
+        <a href="{{ url_for('main.issue_board', page=issues.prev_num, search=search, category=category, status=status, ward=ward, sort=sort) }}" class="btn btn-outline btn-sm">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
+
+        {% for page_num in issues.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if page_num %}
+                <a href="{{ url_for('main.issue_board', page=page_num, search=search, category=category, status=status, ward=ward, sort=sort) }}"
+                   class="btn btn-sm {{ 'btn-primary' if page_num == issues.page else 'btn-outline' }}">
+                    {{ page_num }}
+                </a>
+            {% else %}
+                <span class="px-2" style="color: var(--text-muted);">...</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if issues.has_next %}
+        <a href="{{ url_for('main.issue_board', page=issues.next_num, search=search, category=category, status=status, ward=ward, sort=sort) }}" class="btn btn-outline btn-sm">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="glass-card p-12 text-center">
+        <i class="fas fa-search text-5xl mb-4" style="color: var(--text-muted);"></i>
+        <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">No Issues Found</h3>
+        <p class="text-sm" style="color: var(--text-secondary);">Try adjusting your search or filter criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/issues.js') }}"></script>
+{% endblock %}

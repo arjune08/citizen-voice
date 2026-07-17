@@ -1,0 +1,118 @@
+<!-- =============================================
+     WardPulse AI - My Reports Page
+     ============================================= -->
+{% extends "base.html" %}
+{% block title %}My Reports{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-24">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold mb-1" style="color: var(--text-primary);">My Reports</h1>
+            <p class="text-sm" style="color: var(--text-secondary);">Track all your submitted complaints</p>
+        </div>
+        <a href="{{ url_for('user.report_issue') }}" class="btn btn-primary mt-4 md:mt-0">
+            <i class="fas fa-plus-circle mr-2"></i>New Report
+        </a>
+    </div>
+
+    <!-- Status Filter Chips -->
+    <div class="flex flex-wrap gap-2 mb-6">
+        <a href="{{ url_for('user.my_reports') }}" class="filter-chip {{ 'active' if not status_filter }}">All</a>
+        {% for s in statuses %}
+        <a href="{{ url_for('user.my_reports', status=s) }}" class="filter-chip {{ 'active' if status_filter == s }}">
+            {{ s|capitalize }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Issues List -->
+    {% if issues.items %}
+        <div class="space-y-4">
+            {% for issue in issues.items %}
+            <div class="glass-card p-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <!-- Image -->
+                    {% if issue.image_path %}
+                        <img src="{{ url_for('main.uploaded_file', filename=issue.image_path) }}" class="w-full md:w-32 h-32 rounded-xl object-cover flex-shrink-0" alt="{{ issue.title }}">
+                    {% else %}
+                        <div class="w-full md:w-32 h-32 rounded-xl flex items-center justify-center flex-shrink-0" style="background: var(--bg-primary);">
+                            <i class="fas fa-image text-3xl" style="color: var(--text-muted);"></i>
+                        </div>
+                    {% endif %}
+
+                    <!-- Content -->
+                    <div class="flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span class="badge badge-{{ issue.priority }}">{{ issue.priority }}</span>
+                            <span class="badge badge-{{ issue.status }}">{{ issue.status }}</span>
+                            <span class="text-xs" style="color: var(--text-muted);">
+                                <i class="fas fa-tag mr-1"></i>{{ issue.category }}
+                            </span>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1" style="color: var(--text-primary);">
+                            <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="hover:text-primary-500 transition">
+                                {{ issue.title }}
+                            </a>
+                        </h3>
+                        <p class="text-sm mb-2" style="color: var(--text-secondary);">{{ issue.description[:150] }}{% if issue.description|length > 150 %}...{% endif %}</p>
+                        <div class="flex flex-wrap items-center gap-4 text-xs" style="color: var(--text-muted);">
+                            <span><i class="fas fa-map-marker-alt mr-1"></i>Ward {{ issue.ward }}</span>
+                            <span><i class="fas fa-calendar mr-1"></i>{{ issue.created_at.strftime('%b %d, %Y') }}</span>
+                            <span class="text-primary-500 font-semibold"><i class="fas fa-arrow-up mr-1"></i>{{ issue.votes_count }} votes</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex md:flex-col items-center gap-2">
+                        <a href="{{ url_for('main.issue_detail', issue_id=issue.id) }}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if issues.pages > 1 %}
+        <div class="flex items-center justify-center gap-2 mt-8">
+            {% if issues.has_prev %}
+            <a href="{{ url_for('user.my_reports', page=issues.prev_num, status=status_filter) }}" class="btn btn-outline btn-sm">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+
+            {% for page_num in issues.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page_num %}
+                    <a href="{{ url_for('user.my_reports', page=page_num, status=status_filter) }}"
+                       class="btn btn-sm {{ 'btn-primary' if page_num == issues.page else 'btn-outline' }}">
+                        {{ page_num }}
+                    </a>
+                {% else %}
+                    <span class="px-2" style="color: var(--text-muted);">...</span>
+                {% endif %}
+            {% endfor %}
+
+            {% if issues.has_next %}
+            <a href="{{ url_for('user.my_reports', page=issues.next_num, status=status_filter) }}" class="btn btn-outline btn-sm">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="glass-card p-12 text-center">
+            <i class="fas fa-inbox text-5xl mb-4" style="color: var(--text-muted);"></i>
+            <h3 class="text-xl font-bold mb-2" style="color: var(--text-primary);">No Reports Found</h3>
+            <p class="text-sm mb-4" style="color: var(--text-secondary);">
+                {% if status_filter %}No {{ status_filter }} reports.{% else %}You haven't submitted any reports yet.{% endif %}
+            </p>
+            <a href="{{ url_for('user.report_issue') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle mr-2"></i>Report Your First Issue
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
