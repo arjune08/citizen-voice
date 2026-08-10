@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Citizen Voice — Report. Track. Improve.</title>
+  <meta name="description" content="Citizen Voice helps communities report civic problems, track progress and make local issues visible.">
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f6f8fc}
+    *{box-sizing:border-box} body{margin:0} a{text-decoration:none;color:inherit}
+    .nav{max-width:1120px;margin:auto;padding:22px 24px;display:flex;justify-content:space-between;align-items:center}
+    .brand{font-weight:800;font-size:1.25rem}.brand span{color:#2563eb}
+    .navlinks{display:flex;gap:18px;align-items:center}.btn{display:inline-block;padding:12px 18px;border-radius:12px;font-weight:700;border:1px solid #dbe3f0;background:white}.primary{background:#2563eb;color:white;border-color:#2563eb}
+    .hero{max-width:1120px;margin:30px auto 0;padding:72px 24px 80px;display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+    .eyebrow{display:inline-block;padding:7px 11px;border-radius:999px;background:#e8f0ff;color:#1d4ed8;font-size:.82rem;font-weight:800}
+    h1{font-size:clamp(2.6rem,6vw,5rem);line-height:1.02;letter-spacing:-.055em;margin:18px 0}.lead{font-size:1.15rem;line-height:1.7;color:#5c667a;max-width:650px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+    .card{background:white;border:1px solid #e3e8f2;border-radius:24px;padding:28px;box-shadow:0 18px 50px rgba(30,55,90,.09)}
+    .issue{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid #edf0f5}.issue:last-child{border-bottom:0}.icon{width:42px;height:42px;border-radius:12px;background:#eef4ff;display:grid;place-items:center}.issue strong{display:block}.muted{color:#737d90;font-size:.9rem;margin-top:4px}
+    .features{max-width:1120px;margin:0 auto;padding:20px 24px 80px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.feature{background:white;border:1px solid #e3e8f2;border-radius:18px;padding:24px}.feature h3{margin:10px 0 8px}.feature p{color:#697386;line-height:1.6;margin:0}
+    footer{border-top:1px solid #e3e8f2;padding:28px 24px;text-align:center;color:#7a8495}
+    @media(max-width:800px){.hero{grid-template-columns:1fr;padding-top:40px}.features{grid-template-columns:1fr}.navlinks a:not(.btn){display:none}}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="/">Citizen <span>Voice</span></a>
+    <div class="navlinks"><a href="#features">How it works</a><a class="btn primary" href="/auth/login">Sign in</a></div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">SMART CIVIC REPORTING</span>
+        <h1>Make your local voice visible.</h1>
+        <p class="lead">Report potholes, garbage, broken streetlights, drainage problems and other civic issues. Citizen Voice turns community reports into structured, location-aware issues that can be tracked toward resolution.</p>
+        <div class="actions">
+          <a class="btn primary" href="/auth/login">Report an issue</a>
+          <a class="btn" href="#features">Explore the platform</a>
+        </div>
+      </div>
+      <div class="card" aria-label="Example civic reports">
+        <h2 style="margin-top:0">Community activity</h2>
+        <div class="issue"><div class="icon">🛣️</div><div><strong>Road damage</strong><div class="muted">Location captured · High priority</div></div></div>
+        <div class="issue"><div class="icon">💡</div><div><strong>Street light</strong><div class="muted">Reported · Under review</div></div></div>
+        <div class="issue"><div class="icon">♻️</div><div><strong>Garbage accumulation</strong><div class="muted">Community verified</div></div></div>
+        <div class="issue"><div class="icon">💧</div><div><strong>Water leakage</strong><div class="muted">Assigned to local team</div></div></div>
+      </div>
+    </section>
+
+    <section class="features" id="features">
+      <article class="feature"><div style="font-size:1.7rem">📍</div><h3>Location-aware reports</h3><p>Attach photos and GPS coordinates so civic teams can understand exactly where an issue needs attention.</p></article>
+      <article class="feature"><div style="font-size:1.7rem">🤖</div><h3>AI-assisted triage</h3><p>Optional AI assistance can help categorize reports and suggest an appropriate priority for faster handling.</p></article>
+      <article class="feature"><div style="font-size:1.7rem">📊</div><h3>Track progress</h3><p>Follow issue status from reporting and verification through assignment and resolution.</p></article>
+    </section>
+  </main>
+
+  <footer>Citizen Voice · A civic technology prototype for smarter communities</footer>
+</body>
+</html>
