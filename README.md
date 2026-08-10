@@ -1,4 +1,4 @@
-# Citizen Voice / WardPulse AI
+# Citizen Voice
 
 A full-stack civic issue reporting platform built with Flask. Citizens can report local problems with photos and GPS coordinates, vote on issues, track status, and use optional AI assistance. Ward officers and admins get a management dashboard.
 
@@ -14,23 +14,42 @@ A full-stack civic issue reporting platform built with Flask. Citizens can repor
 - Excel/PDF exports
 - Responsive UI with dark/light mode
 - Optional Gemini AI and email integrations
-- Production Gunicorn configuration
-- Render Blueprint and Docker deployment files
-- `/health` endpoint for deployment health checks
+- Vercel serverless deployment configuration
+- `/health` endpoint for deployment checks
 
 ## Stack
 
 - **Backend:** Python, Flask, SQLAlchemy
 - **Auth:** Flask-Login, Werkzeug password hashing, Flask-WTF CSRF
 - **Frontend:** HTML, Tailwind CSS CDN, vanilla JavaScript
-- **Database:** SQLite by default; PostgreSQL-compatible URI supported
+- **Database:** SQLite for local/demo; PostgreSQL-compatible URI supported
 - **Maps:** Leaflet + OpenStreetMap
 - **AI:** Google Gemini API (optional)
-- **Deployment:** Gunicorn, Docker, Render
+- **Deployment:** Vercel, with Render/Docker configs also retained
+
+## Deploy to Vercel
+
+1. Push this repository to GitHub.
+2. In Vercel, choose **Add New → Project** and import `arjune08/citizen-voice`.
+3. Vercel will detect `vercel.json` and use `api/index.py` as the Python serverless entrypoint.
+4. Add environment variables in the Vercel project settings:
+
+   - `SECRET_KEY` — use a long random value
+   - `DATABASE_URL` or `DATABASE_URI` — recommended PostgreSQL connection string
+   - `GEMINI_API_KEY` — optional
+   - `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_RECEIVER` — optional
+   - `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USE_TLS` — optional
+
+5. Deploy.
+6. Verify `https://YOUR-DOMAIN/health` returns `{"status":"ok","service":"citizen-voice"}`.
+
+### Vercel storage note
+
+Vercel serverless functions do **not** provide durable local storage. If no database URL is configured, the app falls back to SQLite under `/tmp` only to keep a hackathon demo running. Data can disappear between serverless instances/redeployments.
+
+For a real deployment, use managed PostgreSQL and persistent object storage for uploaded images. Do not rely on `/tmp` for permanent files.
 
 ## Run locally
-
-### 1. Install
 
 ```bash
 python -m venv .venv
@@ -52,17 +71,6 @@ Then:
 
 ```bash
 pip install -r requirements.txt
-```
-
-### 2. Configure
-
-Copy `.env.example` to `.env` and set at least a strong `SECRET_KEY`.
-
-AI and email are optional. The application is designed to run without those credentials.
-
-### 3. Start
-
-```bash
 python app.py
 ```
 
@@ -70,61 +78,19 @@ Open `http://localhost:5000`.
 
 Health check: `http://localhost:5000/health`
 
-### 4. Create an admin
+Create an admin:
 
 ```bash
 flask --app app create-superadmin
 ```
 
-Follow the prompts.
-
-## Production deployment
-
-### Render
-
-This repository includes `render.yaml`. In Render, create a new Blueprint from the repository. The service installs dependencies and starts with Gunicorn.
-
-Required/optional environment variables can be added in the Render dashboard:
-
-- `SECRET_KEY` — required; use a long random value
-- `DATABASE_URI` — defaults to SQLite for a simple demo
-- `GEMINI_API_KEY` — optional AI features
-- `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_RECEIVER` — optional email notifications
-
-**Important:** SQLite on a typical cloud web service is suitable for a hackathon demo but is not durable storage across every redeploy/restart. For production, use a managed PostgreSQL database and set `DATABASE_URI` to its connection string.
-
-### Docker
-
-```bash
-docker build -t citizen-voice .
-docker run --rm -p 5000:5000 -e SECRET_KEY=change-me citizen-voice
-```
-
-The container uses Gunicorn and listens on the `PORT` environment variable.
-
-## Repository layout
-
-```text
-app.py
-models.py
-routes.py
-requirements.txt
-.env.example
-Procfile
-render.yaml
-Dockerfile
-static/
-templates/
-uploads/
-```
-
-## Security notes
+## Security
 
 - Never commit `.env` or real API/email credentials.
 - Use a strong production `SECRET_KEY`.
-- Keep uploaded files restricted to the configured extensions and size limit.
-- For production workloads, use PostgreSQL and persistent object/file storage.
+- Keep uploads restricted by extension and size.
+- For production, use PostgreSQL and persistent object/file storage.
 
 ## Hackathon positioning
 
-**Citizen Voice** turns citizen reports into structured, location-aware civic issues that authorities can prioritize and resolve. It is designed as an SIH-style prototype combining civic technology, AI, geospatial visualization, and an administrative workflow.
+**Citizen Voice** turns citizen reports into structured, location-aware civic issues that authorities can prioritize and resolve. It is an SIH-style prototype combining civic technology, AI, geospatial visualization, and an administrative workflow.
