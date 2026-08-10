@@ -1,181 +1,130 @@
-# WardPulse AI – Local Issue Voting Board
+# Citizen Voice / WardPulse AI
 
-A production-ready, full-stack civic complaint platform built with Flask, SQLite, and Tailwind CSS. Citizens can register, report local issues with photos, vote on complaints, and get AI assistance. Ward officers/admins manage complaints through a powerful dashboard.
+A full-stack civic issue reporting platform built with Flask. Citizens can report local problems with photos and GPS coordinates, vote on issues, track status, and use optional AI assistance. Ward officers and admins get a management dashboard.
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue)
-![Flask](https://img.shields.io/badge/Flask-3.0-green)
-![SQLite](https://img.shields.io/badge/Database-SQLite-orange)
-![AI](https://img.shields.io/badge/AI-Gemini-purple)
+## Highlights
 
----
+- Citizen registration and secure login
+- Civic issue reporting with image upload and GPS location
+- AI-assisted category and priority detection
+- Community voting and duplicate-issue handling
+- Issue status tracking
+- Interactive Leaflet/OpenStreetMap issue map
+- Admin and ward-officer dashboard
+- Excel/PDF exports
+- Responsive UI with dark/light mode
+- Optional Gemini AI and email integrations
+- Production Gunicorn configuration
+- Render Blueprint and Docker deployment files
+- `/health` endpoint for deployment health checks
 
-## Features
+## Stack
 
-### Citizens
-- ✅ Register & Login with secure password hashing
-- ✅ Report issues with photos, GPS location, and detailed descriptions
-- ✅ AI-powered category and priority detection
-- ✅ Vote on community issues
-- ✅ Track complaint status (Pending → Verified → Assigned → Resolved)
-- ✅ AI Chatbot for assistance on every page
-- ✅ Real-time notifications
-- ✅ Profile management with complaint history
+- **Backend:** Python, Flask, SQLAlchemy
+- **Auth:** Flask-Login, Werkzeug password hashing, Flask-WTF CSRF
+- **Frontend:** HTML, Tailwind CSS CDN, vanilla JavaScript
+- **Database:** SQLite by default; PostgreSQL-compatible URI supported
+- **Maps:** Leaflet + OpenStreetMap
+- **AI:** Google Gemini API (optional)
+- **Deployment:** Gunicorn, Docker, Render
 
-### Admin Dashboard
-- ✅ Comprehensive dashboard with charts and metrics
-- ✅ Manage complaints (view, update status, delete)
-- ✅ User management (search, enable/disable, delete)
-- ✅ Admin management with role-based access (Super Admin only)
-- ✅ Export reports (Excel & PDF)
-- ✅ AI-generated analytics and summaries
-- ✅ Ward-wise leaderboard
+## Run locally
 
-### Platform
-- ✅ Interactive map with color-coded markers (Leaflet + OpenStreetMap)
-- ✅ Dark/Light mode toggle
-- ✅ Responsive design (Desktop, Tablet, Mobile)
-- ✅ Email notifications via Gmail SMTP
-- ✅ QR codes for each complaint
-- ✅ Glassmorphism UI with animations
-- ✅ Search, filter, and sort functionality
-- ✅ Duplicate issue detection
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| Backend | Python Flask 3.0 |
-| Database | SQLite + SQLAlchemy |
-| Frontend | HTML5 + Tailwind CSS (CDN) + Vanilla JS |
-| Auth | Flask-Login |
-| Email | Flask-Mail (Gmail SMTP) |
-| AI | Google Gemini API |
-| Maps | Leaflet.js + OpenStreetMap |
-| Charts | Chart.js |
-| Icons | Font Awesome 6 |
-| Export | openpyxl (Excel), reportlab (PDF) |
-
----
-
-## Quick Start
-
-### 1. Install Dependencies
+### 1. Install
 
 ```bash
-cd win
+python -m venv .venv
+```
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+macOS/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Then:
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
+### 2. Configure
 
-```bash
-# Copy and edit the environment file
-copy .env.example .env
+Copy `.env.example` to `.env` and set at least a strong `SECRET_KEY`.
 
-# Edit .env with your settings:
-# - SECRET_KEY: Generate a random string
-# - MAIL_USERNAME: Your Gmail address
-# - MAIL_PASSWORD: Gmail App Password (not regular password)
-# - GEMINI_API_KEY: From https://aistudio.google.com/app/apikey
-```
+AI and email are optional. The application is designed to run without those credentials.
 
-### 3. Create Super Admin
-
-```bash
-flask create-superadmin
-# Follow prompts to enter name, email, and password
-```
-
-### 4. Run the Application
+### 3. Start
 
 ```bash
 python app.py
-# OR
-flask run --debug
 ```
 
-### 5. Open in Browser
+Open `http://localhost:5000`.
 
-```
-http://localhost:5000
-```
+Health check: `http://localhost:5000/health`
 
----
+### 4. Create an admin
 
-## Project Structure
-
-```
-win/
-├── app.py              # Flask app factory, config, CLI
-├── models.py           # SQLAlchemy models
-├── routes.py           # All route blueprints
-├── requirements.txt    # Python dependencies
-├── .env.example        # Environment template
-├── uploads/            # Uploaded images
-├── static/
-│   ├── css/
-│   │   └── style.css   # Custom design system
-│   ├── js/
-│   │   ├── main.js     # Core JS (theme, toasts, animations)
-│   │   ├── auth.js     # Auth forms
-│   │   ├── issues.js   # Voting
-│   │   ├── dashboard.js
-│   │   ├── admin.js    # AI summary
-│   │   ├── map.js      # Map utilities
-│   │   └── chatbot.js  # AI chatbot
-│   └── images/
-├── templates/
-│   ├── base.html       # Base layout
-│   ├── landing.html    # Landing page
-│   ├── auth/           # Login, Register, Admin Login
-│   ├── user/           # Dashboard, Report, Profile
-│   ├── issues/         # Board, Detail, Map
-│   └── admin/          # Dashboard, Complaints, Users, Admins
-└── README.md
+```bash
+flask --app app create-superadmin
 ```
 
----
+Follow the prompts.
 
-## Admin Roles
+## Production deployment
 
-| Role | Permissions |
-|------|------------|
-| Super Admin | Full access: manage admins, users, complaints, analytics |
-| Ward Officer | Manage complaints, view users, export reports |
-| Moderator | View and update complaint status |
+### Render
 
----
+This repository includes `render.yaml`. In Render, create a new Blueprint from the repository. The service installs dependencies and starts with Gunicorn.
 
-## Email Configuration
+Required/optional environment variables can be added in the Render dashboard:
 
-To enable email notifications:
+- `SECRET_KEY` — required; use a long random value
+- `DATABASE_URI` — defaults to SQLite for a simple demo
+- `GEMINI_API_KEY` — optional AI features
+- `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_RECEIVER` — optional email notifications
 
-1. Enable 2-Factor Authentication on your Gmail account
-2. Generate an App Password: Google Account → Security → App Passwords
-3. Set in `.env`:
-   ```
-   MAIL_USERNAME=your-email@gmail.com
-   MAIL_PASSWORD=your-16-char-app-password
-   ```
+**Important:** SQLite on a typical cloud web service is suitable for a hackathon demo but is not durable storage across every redeploy/restart. For production, use a managed PostgreSQL database and set `DATABASE_URI` to its connection string.
 
----
+### Docker
 
-## AI Configuration
+```bash
+docker build -t citizen-voice .
+docker run --rm -p 5000:5000 -e SECRET_KEY=change-me citizen-voice
+```
 
-To enable AI features (chatbot, category detection, priority detection, summaries):
+The container uses Gunicorn and listens on the `PORT` environment variable.
 
-1. Get an API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-2. Set in `.env`:
-   ```
-   GEMINI_API_KEY=your-api-key
-   ```
+## Repository layout
 
-**Note:** All AI features gracefully degrade with helpful fallback responses if no API key is configured.
+```text
+app.py
+models.py
+routes.py
+requirements.txt
+.env.example
+Procfile
+render.yaml
+Dockerfile
+static/
+templates/
+uploads/
+```
 
----
+## Security notes
 
-## License
+- Never commit `.env` or real API/email credentials.
+- Use a strong production `SECRET_KEY`.
+- Keep uploaded files restricted to the configured extensions and size limit.
+- For production workloads, use PostgreSQL and persistent object/file storage.
 
-Built for Smart City Hackathon. All rights reserved.
+## Hackathon positioning
+
+**Citizen Voice** turns citizen reports into structured, location-aware civic issues that authorities can prioritize and resolve. It is designed as an SIH-style prototype combining civic technology, AI, geospatial visualization, and an administrative workflow.
