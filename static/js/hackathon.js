@@ -1,0 +1,11 @@
+document.addEventListener('DOMContentLoaded',()=>{
+ const root=document.querySelector('.cv-page');
+ if(!root)return;
+ const cursor=document.createElement('div'); cursor.className='cv-cursor';
+ cursor.style.cssText='position:fixed;left:0;top:0;width:18px;height:18px;border:1px solid #67e8f9;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .18s,height .18s,background .18s;display:none';
+ document.body.appendChild(cursor);
+ if(matchMedia('(pointer:fine)').matches){cursor.style.display='block';window.addEventListener('pointermove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px'});document.querySelectorAll('a,button,.cv-card').forEach(el=>{el.addEventListener('mouseenter',()=>{cursor.style.width='38px';cursor.style.height='38px';cursor.style.background='rgba(103,232,249,.08)'});el.addEventListener('mouseleave',()=>{cursor.style.width='18px';cursor.style.height='18px';cursor.style.background='transparent'})})}
+ const io=new IntersectionObserver(entries=>entries.forEach(e=>e.isIntersecting&&e.target.classList.add('visible')),{threshold:.12});document.querySelectorAll('.cv-reveal').forEach(el=>io.observe(el));
+ document.querySelectorAll('[data-count]').forEach(el=>{const target=Number(el.dataset.count||0);let start=0;const duration=900;const t0=performance.now();const tick=t=>{const p=Math.min((t-t0)/duration,1);el.textContent=Math.floor(target*(1-Math.pow(1-p,3))).toLocaleString();if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)});
+ document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const target=document.querySelector(a.getAttribute('href'));if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'start'})}}));
+});
