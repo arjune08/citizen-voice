@@ -1,5 +1,5 @@
 # =============================================
-# WardPulse AI - Flask Application Factory
+# Citizen Voice - Flask Application
 # =============================================
 
 import os
@@ -21,24 +21,25 @@ csrf = CSRFProtect()
 
 
 def create_app():
-    """Create and configure the Flask application."""
     app = Flask(__name__)
 
-    secret_key = os.environ.get('SECRET_KEY')
-    if not secret_key:
-        secret_key = 'dev-only-change-me'
-        if not os.environ.get('FLASK_ENV') == 'development':
-            app.logger.warning('SECRET_KEY is not set; using a development fallback.')
-    app.config['SECRET_KEY'] = secret_key
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-only-change-me')
 
-    database_uri = os.environ.get('DATABASE_URI', 'sqlite:///database.db')
-    # Render/Railway commonly expose PostgreSQL as DATABASE_URL.
+    database_uri = os.environ.get('DATABASE_URI') or os.environ.get('DATABASE_URL')
+    if not database_uri:
+        # Vercel's filesystem is ephemeral/read-only outside /tmp.
+        # SQLite here is suitable only for a demo deployment.
+        database_uri = 'sqlite:////tmp/citizen_voice.db' if os.environ.get('VERCEL') else 'sqlite:///database.db'
     if database_uri.startswith('postgres://'):
         database_uri = database_uri.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    if os.environ.get('VERCEL'):
+        upload_folder = '/tmp/citizen_voice_uploads'
+    else:
+        upload_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', upload_folder)
     app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
     app.config['ALLOWED_EXTENSIONS'] = {'jpg', 'jpeg', 'png', 'webp'}
 
@@ -49,7 +50,6 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
     app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', app.config['MAIL_USERNAME'] or 'noreply@citizenvoice.local')
     app.config['MAIL_RECEIVER'] = os.environ.get('MAIL_RECEIVER', '')
-
     app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY', '')
 
     db.init_app(app)
@@ -63,7 +63,6 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        """Load either a citizen or admin from the Flask-Login session."""
         try:
             if isinstance(user_id, str) and user_id.startswith('admin_'):
                 return Admin.query.get(int(user_id.replace('admin_', '', 1)))
@@ -84,7 +83,7 @@ def create_app():
     def inject_globals():
         return {
             'current_year': datetime.utcnow().year,
-            'app_name': 'WardPulse AI',
+            'app_name': 'Citizen Voice',
             'categories': [
                 'Road Damage', 'Garbage', 'Street Light', 'Drainage',
                 'Water Leakage', 'Electricity', 'Public Safety', 'Tree Fallen', 'Others'
@@ -95,7 +94,6 @@ def create_app():
 
     @app.get('/health')
     def health():
-        """Simple deployment health endpoint."""
         try:
             db.session.execute(db.text('SELECT 1'))
             return jsonify({'status': 'ok', 'service': 'citizen-voice'}), 200
@@ -116,11 +114,10 @@ def create_app():
         db.create_all()
 
     @app.cli.command('create-superadmin')
-    @click.option('--name', prompt='Full Name', help='Admin full name')
-    @click.option('--email', prompt='Email', help='Admin email')
-    @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='Admin password')
+    @click.option('--name', prompt='Full Name')
+    @click.option('--email', prompt='Email')
+    @click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True)
     def create_superadmin(name, email, password):
-        """Create a Super Admin account via CLI."""
         existing = Admin.query.filter_by(email=email.strip().lower()).first()
         if existing:
             click.echo(f'Error: Admin with email {email} already exists.')
